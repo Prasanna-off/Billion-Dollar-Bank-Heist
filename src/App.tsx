@@ -8,7 +8,6 @@ import { InteractionTooltip } from './components/ui/InteractionTooltip';
 import { PasswordTerminal } from './components/ui/PasswordTerminal';
 import { WinSequenceOverlay } from './components/ui/WinSequenceOverlay';
 import { LossSequenceOverlay } from './components/ui/LossSequenceOverlay';
-import { AdminModal } from './components/ui/AdminModal';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { PauseModal } from './components/ui/PauseModal';
 import { DifficultySelectModal } from './components/ui/DifficultySelectModal';
@@ -85,19 +84,16 @@ const GameInterface: React.FC = () => {
 
       {/* Gameplay HUD & Tooltips */}
       <HUD />
-      <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-auto">
+      <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-auto px-3">
         <InteractionTooltip onOpenDoorKeypad={() => setDoorKeypadOpen(true)} />
       </div>
 
       {/* Interactive Vault Word Password Terminal */}
       <PasswordTerminal />
 
-      {/* Cinematic Win & Loss Sequences (3 green screen blast videos) */}
+      {/* Cinematic Win & Loss Sequences */}
       <WinSequenceOverlay />
       <LossSequenceOverlay />
-
-      {/* Admin Screen */}
-      <AdminModal />
 
       {/* Settings Screen */}
       <SettingsModal />

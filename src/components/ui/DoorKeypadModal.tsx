@@ -62,50 +62,50 @@ export const DoorKeypadModal: React.FC<DoorKeypadModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="w-full max-w-md bg-slate-950 border-2 border-sky-400/60 rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(2,132,199,0.4)] text-white relative"
+        className="w-full max-w-sm sm:max-w-md bg-slate-950 border-2 border-sky-400/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-7 shadow-[0_0_50px_rgba(2,132,199,0.4)] text-white relative"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-sky-500/30">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-2xl bg-sky-500/20 text-sky-400">
-              <Lock className="w-6 h-6" />
+        <div className="flex items-center justify-between pb-2 sm:pb-3 border-b border-sky-500/30">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-sky-500/20 text-sky-400">
+              <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-cinematic font-bold text-white tracking-wide">
-                MAIN ENTRANCE KEYPAD
+              <h3 className="text-sm sm:text-base md:text-lg font-cinematic font-bold text-white tracking-wide">
+                ENTRANCE KEYPAD
               </h3>
-              <p className="text-xs font-mono text-gray-400">FBI Outer Access Security</p>
+              <p className="text-[9px] sm:text-xs font-mono text-gray-400">FBI Outer Access Security</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-white rounded-lg sm:rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Door Math Clue */}
-        <div className="my-4 p-4 rounded-2xl bg-gradient-to-r from-sky-950/60 via-slate-900 to-sky-950/60 border border-sky-400/40 shadow-inner">
-          <div className="flex items-center space-x-2 text-xs font-mono font-bold text-sky-400 uppercase tracking-wider mb-1">
-            <Calculator className="w-4 h-4 text-yellow-400" />
+        <div className="my-3 sm:my-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-950/60 via-slate-900 to-sky-950/60 border border-sky-400/40 shadow-inner">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 text-[9px] sm:text-xs font-mono font-bold text-sky-400 uppercase tracking-wider mb-1">
+            <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
             <span>DOOR SECURITY CLUE</span>
           </div>
-          <p className="text-sm sm:text-base font-mono text-yellow-300 font-bold leading-relaxed">
+          <p className="text-xs sm:text-sm md:text-base font-mono text-yellow-300 font-bold leading-relaxed">
             {currentChallenge.doorClue}
           </p>
         </div>
 
         {/* PIN Display */}
-        <div className="my-3 py-3 px-4 bg-black/80 rounded-2xl border-2 border-sky-500/40 text-center">
-          <span className="text-xs font-mono text-gray-400 block mb-1">ENTER 2-DIGIT PIN</span>
-          <div className="text-3xl font-mono font-black tracking-[0.5em] text-sky-300 h-10 flex items-center justify-center">
-            {pin ? pin : <span className="text-gray-600 tracking-normal font-normal text-base">_ _</span>}
+        <div className="my-2 sm:my-3 py-2 sm:py-3 px-3 sm:px-4 bg-black/80 rounded-xl sm:rounded-2xl border-2 border-sky-500/40 text-center">
+          <span className="text-[9px] sm:text-xs font-mono text-gray-400 block mb-1">ENTER 2-DIGIT PIN</span>
+          <div className="text-2xl sm:text-3xl font-mono font-black tracking-[0.5em] text-sky-300 h-8 sm:h-10 flex items-center justify-center">
+            {pin ? pin : <span className="text-gray-600 tracking-normal font-normal text-sm sm:text-base">_ _</span>}
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export const DoorKeypadModal: React.FC<DoorKeypadModalProps> = ({ isOpen, onClos
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-xs font-mono text-red-400 text-center bg-red-950/50 border border-red-500/40 py-1.5 px-3 rounded-xl mb-3"
+              className="text-[10px] sm:text-xs font-mono text-red-400 text-center bg-red-950/50 border border-red-500/40 py-1 sm:py-1.5 px-2 sm:px-3 rounded-lg sm:rounded-xl mb-2 sm:mb-3"
             >
               ⚠ {errorMsg}
             </motion.p>
@@ -124,13 +124,13 @@ export const DoorKeypadModal: React.FC<DoorKeypadModalProps> = ({ isOpen, onClos
         </AnimatePresence>
 
         {/* Number Pad */}
-        <div className="grid grid-cols-3 gap-2 my-3">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2 my-2 sm:my-3">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}
               type="button"
               onClick={() => handleKeyPress(digit)}
-              className="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-sky-600 text-sky-200 font-mono text-lg font-bold border border-slate-800 shadow transition-colors cursor-pointer"
+              className="py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-sky-600 text-sky-200 font-mono text-base sm:text-lg font-bold border border-slate-800 shadow transition-colors cursor-pointer"
             >
               {digit}
             </button>
@@ -138,21 +138,21 @@ export const DoorKeypadModal: React.FC<DoorKeypadModalProps> = ({ isOpen, onClos
           <button
             type="button"
             onClick={handleClear}
-            className="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-gray-400 font-mono text-xs font-bold border border-slate-800 transition-colors cursor-pointer"
+            className="py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-slate-900 hover:bg-slate-800 text-gray-400 font-mono text-[10px] sm:text-xs font-bold border border-slate-800 transition-colors cursor-pointer"
           >
             CLEAR
           </button>
           <button
             type="button"
             onClick={() => handleKeyPress('0')}
-            className="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-sky-600 text-sky-200 font-mono text-lg font-bold border border-slate-800 shadow transition-colors cursor-pointer"
+            className="py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-sky-600 text-sky-200 font-mono text-base sm:text-lg font-bold border border-slate-800 shadow transition-colors cursor-pointer"
           >
             0
           </button>
           <button
             type="button"
             onClick={handleBackspace}
-            className="py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-gray-400 font-mono text-xs font-bold border border-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+            className="py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-slate-900 hover:bg-slate-800 text-gray-400 font-mono text-xs font-bold border border-slate-800 flex items-center justify-center transition-colors cursor-pointer"
           >
             <Delete className="w-4 h-4" />
           </button>
@@ -162,10 +162,10 @@ export const DoorKeypadModal: React.FC<DoorKeypadModalProps> = ({ isOpen, onClos
         <button
           type="button"
           onClick={handleSubmit}
-          className="w-full mt-2 py-3.5 bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 hover:from-sky-400 hover:to-blue-500 text-white font-cinematic font-bold rounded-xl shadow-[0_0_20px_rgba(2,132,199,0.4)] flex items-center justify-center space-x-2 transition-all cursor-pointer"
+          className="w-full mt-2 py-3 sm:py-3.5 bg-gradient-to-r from-sky-500 via-blue-600 to-sky-500 hover:from-sky-400 hover:to-blue-500 text-white font-cinematic font-bold rounded-lg sm:rounded-xl shadow-[0_0_20px_rgba(2,132,199,0.4)] flex items-center justify-center space-x-2 transition-all cursor-pointer text-sm sm:text-base"
         >
-          <Unlock className="w-5 h-5" />
-          <span>AUTHENTICATE & OPEN DOORS</span>
+          <Unlock className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span>AUTHENTICATE & OPEN</span>
         </button>
       </motion.div>
     </div>
