@@ -53,11 +53,12 @@ export const AdminModal: React.FC = () => {
       if (field === 'word') {
         const cleanWord = value.replace(/[^a-zA-Z]/g, '').toUpperCase();
         target.word = cleanWord;
-        target.password = `${cleanWord}${target.digits}`;
+        target.password = cleanWord;
       } else if (field === 'digits') {
         const cleanDigits = value.replace(/[^0-9]/g, '').slice(0, 2);
         target.digits = cleanDigits;
-        target.password = `${target.word}${cleanDigits}`;
+      } else if (field === 'doorClue') {
+        target.doorClue = value;
       } else if (field.startsWith('clue')) {
         target.clues = {
           ...target.clues,
@@ -283,15 +284,29 @@ export const AdminModal: React.FC = () => {
               />
             </div>
 
-            {/* Generated Password Preview */}
+            {/* Word Password Preview */}
             <div>
               <label className="block text-xs font-mono text-gray-300 mb-1.5 uppercase tracking-wider">
-                Full Password Preview
+                Vault Master Word
               </label>
               <div className="w-full bg-slate-900 border border-cyan-500/40 rounded-xl px-4 py-2.5 font-mono text-base font-bold text-cyan-400 tracking-wider text-center">
-                {currentCh.password || '—'}
+                {currentCh.word || '—'}
               </div>
             </div>
+          </div>
+
+          {/* Door Clue */}
+          <div>
+            <label className="block text-xs font-mono text-sky-400 mb-1 font-bold">
+              DOOR PIN MATH CLUE (Shown on Entrance Keypad):
+            </label>
+            <input
+              type="text"
+              value={currentCh.doorClue || ''}
+              onChange={(e) => handleFieldChange(activeTab, 'doorClue', e.target.value)}
+              placeholder="e.g. Enter Door Pin: Solve [3³ = 27]"
+              className="w-full bg-black/70 border border-slate-700 focus:border-sky-400 rounded-xl px-4 py-2.5 font-mono text-sm text-gray-200"
+            />
           </div>
 
           {/* Clues */}

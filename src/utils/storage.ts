@@ -1,25 +1,25 @@
-import { Challenge, Settings } from '../types/game';
-import { DEFAULT_CHALLENGES, DEFAULT_SETTINGS, DEFAULT_ADMIN_PIN } from '../constants/challenges';
+import { Challenge, Settings, DifficultyLevel } from '../types/game';
+import { DEFAULT_CHALLENGES, DEFAULT_SETTINGS, DEFAULT_ADMIN_PIN, DIFFICULTY_CHALLENGES } from '../constants/challenges';
 
 const KEYS = {
-  CHALLENGES: 'bankHeistChallenges',
+  CHALLENGES: 'bankHeistChallenges_v3',
   NEXT_CHALLENGE_INDEX: 'bankHeistNextChallenge',
   SETTINGS: 'bankHeistSettings',
   ADMIN_PIN: 'bankHeistAdminPin',
 };
 
-export const loadChallenges = (): Challenge[] => {
+export const loadChallenges = (diff?: DifficultyLevel): Challenge[] => {
   try {
     const raw = localStorage.getItem(KEYS.CHALLENGES);
-    if (!raw) return DEFAULT_CHALLENGES;
+    if (!raw) return diff ? DIFFICULTY_CHALLENGES[diff] : DEFAULT_CHALLENGES;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length === 3) {
       return parsed;
     }
-    return DEFAULT_CHALLENGES;
+    return diff ? DIFFICULTY_CHALLENGES[diff] : DEFAULT_CHALLENGES;
   } catch (err) {
     console.warn('Failed to load challenges from localStorage, using defaults:', err);
-    return DEFAULT_CHALLENGES;
+    return diff ? DIFFICULTY_CHALLENGES[diff] : DEFAULT_CHALLENGES;
   }
 };
 
@@ -90,9 +90,9 @@ export const saveAdminPin = (pin: string): void => {
   }
 };
 
-export const resetToDefaults = (): void => {
+export const resetToDefaults = (diff: DifficultyLevel = 'EASY'): void => {
   try {
-    localStorage.setItem(KEYS.CHALLENGES, JSON.stringify(DEFAULT_CHALLENGES));
+    localStorage.setItem(KEYS.CHALLENGES, JSON.stringify(DIFFICULTY_CHALLENGES[diff]));
     localStorage.setItem(KEYS.NEXT_CHALLENGE_INDEX, '0');
     localStorage.setItem(KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN);
   } catch (err) {

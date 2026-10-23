@@ -14,15 +14,18 @@ export type SceneType =
   | 'ADMIN_DASHBOARD'
   | 'SETTINGS';
 
+export type DifficultyLevel = 'EASY' | 'MEDIUM' | 'HARD';
+
 export interface Challenge {
   id: number;
   word: string;
   digits: string;
-  password: string;
+  password: string; // for backward compatibility/preview
+  doorClue: string; // Math expression or clue for the 2-digit entrance keypad
   clues: {
-    clue1: string;
-    clue2: string;
-    clue3: string;
+    clue1: string; // word category clue (Attempt 1)
+    clue2: string; // word length/properties clue (Attempt 2)
+    clue3: string; // word extra hint (Attempt 3)
   };
 }
 
@@ -36,6 +39,7 @@ export interface Settings {
   sfxVolume: number;
   graphicsQuality: GraphicsQuality;
   fullscreen: boolean;
+  difficulty: DifficultyLevel;
 }
 
 export type GameStatus = 'IDLE' | 'PLAYING' | 'WIN' | 'LOSS' | 'PAUSED';
@@ -45,10 +49,12 @@ export interface GameState {
   currentChallengeIndex: number;
   currentAttempt: number; // 1, 2, or 3
   remainingChances: number; // 3, 2, 1, or 0
-  currentPrize: number; // 1,000,000,000 -> 500,000,000 -> 250,000,000 -> 0
+  currentPrize: number;
   gameStatus: GameStatus;
   adminAuthenticated: boolean;
   isPaused: boolean;
   selectedObject: string | null;
   notificationMessage: string | null;
+  difficulty: DifficultyLevel;
+  doorUnlocked: boolean;
 }

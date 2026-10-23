@@ -10,10 +10,9 @@ interface CameraTarget {
 }
 
 export const CameraRig: React.FC = () => {
-  const { currentScene, lastAttemptSuccess } = useGame();
+  const { currentScene } = useGame();
   const currentPos = useRef<THREE.Vector3>(new THREE.Vector3(0, 5, 25));
   const currentLookAt = useRef<THREE.Vector3>(new THREE.Vector3(0, 3, 0));
-  const shakeIntensity = useRef<number>(0);
 
   // Compute desired camera position and focus target based on active scene
   const getSceneTarget = (): CameraTarget => {
@@ -91,37 +90,18 @@ export const CameraRig: React.FC = () => {
     const { pos: targetPos, target: targetLook, fov } = getSceneTarget();
     const camera = state.camera as THREE.PerspectiveCamera;
 
-    // Smooth lerping
-    const lerpFactor = Math.min(delta * 2.8, 1.0);
+    // Stable smooth lerp without trembling/jitter
+    const safeDelta = Math.min(delta, 0.05);
+    const lerpFactor = THREE.MathUtils.clamp(safeDelta * 3.5, 0.01, 1.0);
+
     currentPos.current.lerp(targetPos, lerpFactor);
     currentLookAt.current.lerp(targetLook, lerpFactor);
 
-    // Apply shake if wrong answer or loss explosion
-    if (lastAttemptSuccess === false || currentScene === 'LOSS_SEQUENCE') {
-      shakeIntensity.current = currentScene === 'LOSS_SEQUENCE' ? 0.35 : 0.08;
-    } else {
-      shakeIntensity.current = THREE.MathUtils.lerp(shakeIntensity.current, 0, delta * 3.0);
-    }
+    // Camera positioning without random Math.random() jitter
+    camera.position.copy(currentPos.current);
+    camera.lookAt(currentLookAt.current);
 
-    const shakeOffset = new THREE.Vector3(
-      (Math.random() - 0.5) * shakeIntensity.current,
-      (Math.random() - 0.5) * shakeIntensity.current,
-      (Math.random() - 0.5) * shakeIntensity.current
-    );
-
-    // Subtle gentle breathing float when in idle menus
-    const time = state.clock.getElapsedTime();
-    const breathingY = Math.sin(time * 0.8) * 0.04;
-    const breathingX = Math.cos(time * 0.5) * 0.04;
-
-    camera.position.copy(currentPos.current).add(shakeOffset);
-    camera.position.y += breathingY;
-    camera.position.x += breathingX;
-
-    const lookTarget = currentLookAt.current.clone().add(shakeOffset);
-    camera.lookAt(lookTarget);
-
-    if (Math.abs(camera.fov - fov) > 0.1) {
+    if (Math.abs(camera.fov - fov) > 0.05) {
       camera.fov = THREE.MathUtils.lerp(camera.fov, fov, lerpFactor);
       camera.updateProjectionMatrix();
     }

@@ -13,6 +13,7 @@ class SoundEngine {
     sfxVolume: 0.9,
     graphicsQuality: 'HIGH',
     fullscreen: false,
+    difficulty: 'EASY',
   };
 
   private currentAudioElement: HTMLAudioElement | null = null;

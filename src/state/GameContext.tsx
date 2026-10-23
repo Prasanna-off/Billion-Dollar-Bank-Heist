@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { SceneType, Challenge, Settings, GameStatus } from '../types/game';
+import { SceneType, Challenge, Settings, GameStatus, DifficultyLevel } from '../types/game';
 import {
   INITIAL_PRIZE,
   SECOND_PRIZE,
   THIRD_PRIZE,
   LOSS_PRIZE,
+  DIFFICULTY_CHALLENGES,
 } from '../constants/challenges';
 import {
   loadChallenges,
@@ -25,6 +26,16 @@ interface GameContextType {
   setScene: (scene: SceneType) => void;
   gameStatus: GameStatus;
 
+  // Difficulty
+  difficulty: DifficultyLevel;
+  setDifficulty: (level: DifficultyLevel) => void;
+  showDifficultyModal: boolean;
+  setShowDifficultyModal: (show: boolean) => void;
+
+  // Door Security
+  doorUnlocked: boolean;
+  unlockDoor: (pin: string) => { success: boolean; message: string };
+
   // Challenge & Game Progression
   challenges: Challenge[];
   currentChallengeIndex: number;
@@ -35,7 +46,7 @@ interface GameContextType {
   currentClue: string;
 
   // Actions
-  startHeist: () => void;
+  startHeist: (selectedDifficulty?: DifficultyLevel) => void;
   submitPassword: (input: string) => { success: boolean; message: string };
   restartGame: (advanceChallenge?: boolean) => void;
   resetCurrentHeist: () => void;
@@ -66,9 +77,13 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [challenges, setChallenges] = useState<Challenge[]>(loadChallenges);
-  const [currentChallengeIndex, setCurrentChallengeIndex] = useState<number>(loadNextChallengeIndex);
   const [settings, setSettingsState] = useState<Settings>(loadSettings);
+  const [difficulty, setDifficultyState] = useState<DifficultyLevel>(settings.difficulty || 'EASY');
+  const [showDifficultyModal, setShowDifficultyModal] = useState<boolean>(false);
+  const [doorUnlocked, setDoorUnlocked] = useState<boolean>(false);
+
+  const [challenges, setChallenges] = useState<Challenge[]>(() => loadChallenges(settings.difficulty || 'EASY'));
+  const [currentChallengeIndex, setCurrentChallengeIndex] = useState<number>(loadNextChallengeIndex);
   const [adminPin, setAdminPinState] = useState<string>(loadAdminPin);
   const [adminAuthenticated, setAdminAuthenticated] = useState<boolean>(false);
 
@@ -87,12 +102,25 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     audioManager.init(settings);
   }, []);
 
-  // Update audio when settings change
   const updateSettings = (newSettings: Partial<Settings>) => {
     const updated = { ...settings, ...newSettings };
+    if (newSettings.difficulty && newSettings.difficulty !== difficulty) {
+      setDifficultyState(newSettings.difficulty);
+      const diffChallenges = DIFFICULTY_CHALLENGES[newSettings.difficulty];
+      setChallenges(diffChallenges);
+      saveChallenges(diffChallenges);
+    }
     setSettingsState(updated);
     saveSettings(updated);
     audioManager.updateSettings(updated);
+  };
+
+  const setDifficulty = (level: DifficultyLevel) => {
+    setDifficultyState(level);
+    updateSettings({ difficulty: level });
+    const diffChallenges = DIFFICULTY_CHALLENGES[level];
+    setChallenges(diffChallenges);
+    saveChallenges(diffChallenges);
   };
 
   // Fullscreen helper
@@ -129,7 +157,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const safeIndex = (currentChallengeIndex % challenges.length + challenges.length) % challenges.length;
   const currentChallenge = challenges[safeIndex] || challenges[0];
 
-  // Current Clue based on attempt
+  // Current Clue based on attempt (revealing word hints progressively)
   const currentClue =
     currentAttempt === 1
       ? currentChallenge.clues.clue1
@@ -207,16 +235,39 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Start a new heist
-  const startHeist = () => {
+  const startHeist = (selectedDifficulty?: DifficultyLevel) => {
+    if (selectedDifficulty) {
+      setDifficulty(selectedDifficulty);
+    }
     setCurrentAttempt(1);
     setRemainingChances(3);
     setCurrentPrize(INITIAL_PRIZE);
     setGameStatus('PLAYING');
+    setDoorUnlocked(false);
     setIsPaused(false);
     setLastAttemptSuccess(null);
     setScene('BANK_EXTERIOR');
     audioManager.playSfx('click');
-    showNotification('MISSION OBJECTIVE: Infiltrate the bank and crack the vault code.');
+    showNotification('STEP 1: Solve the Entrance PIN Keypad to unlock the main bank doors!');
+  };
+
+  // Unlock Entrance Door with 2-digit PIN
+  const unlockDoor = (pin: string): { success: boolean; message: string } => {
+    const trimmed = pin.trim();
+    if (trimmed === currentChallenge.digits.trim()) {
+      setDoorUnlocked(true);
+      audioManager.playSfx('granted');
+      audioManager.playSfx('door');
+      showNotification('ENTRANCE KEYPAD UNLOCKED! Sliding doors opened.');
+      setScene('BANK_ENTRY');
+      setTimeout(() => {
+        setScene('BANK_INTERIOR');
+      }, 1400);
+      return { success: true, message: 'DOOR UNLOCKED' };
+    } else {
+      audioManager.playSfx('denied');
+      return { success: false, message: 'INCORRECT PIN — CHECK DOOR MATH CLUE' };
+    }
   };
 
   // Reset current heist without advancing rotation (used when player restarts mid-game)
@@ -225,6 +276,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRemainingChances(3);
     setCurrentPrize(INITIAL_PRIZE);
     setGameStatus('PLAYING');
+    setDoorUnlocked(false);
     setIsPaused(false);
     setLastAttemptSuccess(null);
     setScene('BANK_EXTERIOR');
@@ -242,6 +294,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setRemainingChances(3);
     setCurrentPrize(INITIAL_PRIZE);
     setGameStatus('PLAYING');
+    setDoorUnlocked(false);
     setIsPaused(false);
     setLastAttemptSuccess(null);
     setScene('BANK_EXTERIOR');
@@ -249,7 +302,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     showNotification(`HEIST INITIATED: Challenge ${(currentChallengeIndex + (advanceChallenge ? 1 : 0)) % 3 + 1}`);
   };
 
-  // Submit password attempt
+  // Submit word password attempt at Vault
   const submitPassword = (input: string): { success: boolean; message: string } => {
     if (isSubmitting || gameStatus !== 'PLAYING' || remainingChances <= 0) {
       return { success: false, message: 'Terminal unavailable.' };
@@ -258,13 +311,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const trimmed = input.trim().toUpperCase();
     if (!trimmed) {
       audioManager.playSfx('denied');
-      return { success: false, message: 'PLEASE ENTER A PASSWORD' };
+      return { success: false, message: 'PLEASE ENTER THE VAULT WORD' };
     }
 
     setIsSubmitting(true);
-    const targetPassword = currentChallenge.password.trim().toUpperCase();
+    // Vault password is the secret WORD (e.g. TIGER, PHOENIX, KRYPTONITE)
+    const targetWord = currentChallenge.word.trim().toUpperCase();
 
-    if (trimmed === targetPassword) {
+    if (trimmed === targetWord) {
       // WINNER!
       setLastAttemptSuccess(true);
       setGameStatus('WIN');
@@ -339,8 +393,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const restoreDefaults = () => {
-    resetToDefaults();
-    setChallenges(loadChallenges());
+    resetToDefaults(difficulty);
+    setChallenges(loadChallenges(difficulty));
     setCurrentChallengeIndex(0);
     setAdminPinState(loadAdminPin());
     showNotification('Challenge configuration restored to defaults.');
@@ -358,6 +412,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         currentScene,
         setScene,
         gameStatus,
+        difficulty,
+        setDifficulty,
+        showDifficultyModal,
+        setShowDifficultyModal,
+        doorUnlocked,
+        unlockDoor,
         challenges,
         currentChallengeIndex,
         currentChallenge,

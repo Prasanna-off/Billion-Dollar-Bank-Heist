@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, HelpCircle, Settings as SettingsIcon, ShieldCheck, Sparkles, Building2 } from 'lucide-react';
+import { Play, HelpCircle, Settings as SettingsIcon, ShieldCheck, Sparkles, Building2, Sliders } from 'lucide-react';
 import { useGame } from '../../state/GameContext';
 import { audioManager } from '../../audio/AudioManager';
 
 export const MainMenu: React.FC = () => {
-  const { startHeist, setScene, currentChallengeIndex } = useGame();
+  const { setShowDifficultyModal, setScene, currentChallengeIndex, difficulty } = useGame();
 
   const handleStart = () => {
     audioManager.playSfx('click');
-    startHeist();
+    setShowDifficultyModal(true);
   };
 
   const handleOpenHowToPlay = () => {
@@ -27,6 +27,17 @@ export const MainMenu: React.FC = () => {
     setScene('ADMIN_LOGIN');
   };
 
+  const getDifficultyEmoji = () => {
+    switch (difficulty) {
+      case 'EASY':
+        return '😎 EASY';
+      case 'MEDIUM':
+        return '🔥 MEDIUM';
+      case 'HARD':
+        return '💀 HARD';
+    }
+  };
+
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-between p-4 sm:p-8 pointer-events-none z-20">
       {/* Top Header Badge */}
@@ -38,6 +49,8 @@ export const MainMenu: React.FC = () => {
       >
         <Building2 className="w-4 h-4 text-yellow-400 animate-pulse" />
         <span className="tracking-widest uppercase font-bold text-white">FBI — FEDERAL BANK OF INDIA</span>
+        <span className="text-gray-400">|</span>
+        <span className="text-emerald-400 font-bold">{getDifficultyEmoji()}</span>
         <span className="text-gray-400">|</span>
         <span className="text-yellow-400 font-bold">CHALLENGE #{currentChallengeIndex + 1}</span>
       </motion.div>
@@ -52,7 +65,7 @@ export const MainMenu: React.FC = () => {
         >
           <div className="text-xs sm:text-sm font-mono tracking-[0.3em] text-yellow-300 uppercase font-bold mb-2 flex items-center justify-center space-x-2 bg-black/40 backdrop-blur-md py-1 px-4 rounded-full border border-yellow-400/30">
             <Sparkles className="w-4 h-4 text-yellow-400 animate-spin" />
-            <span>DAYTIME INFILTRATION CHALLENGE</span>
+            <span>DAYTIME 2-TIER SECURITY HEIST</span>
             <Sparkles className="w-4 h-4 text-yellow-400 animate-spin" />
           </div>
 
@@ -67,7 +80,7 @@ export const MainMenu: React.FC = () => {
           </p>
 
           <div className="mt-3 inline-block bg-slate-900/85 backdrop-blur-md border border-sky-400/40 px-4 py-1.5 rounded-xl text-xs font-mono text-sky-200 shadow-lg">
-            ⚡ Exactly 3 attempts. ₹1,000,000,000 prize. Solve clues & math expressions to win!
+            ⚡ Stage 1: Solve Door Math PIN → Stage 2: Crack Vault Secret Word (3 Attempts)
           </div>
         </motion.div>
       </div>
@@ -79,7 +92,7 @@ export const MainMenu: React.FC = () => {
         transition={{ duration: 0.8, delay: 0.4 }}
         className="flex flex-col sm:flex-row items-center gap-4 pointer-events-auto w-full max-w-md sm:max-w-2xl justify-center mb-2"
       >
-        {/* START HEIST BUTTON */}
+        {/* START HEIST BUTTON (Triggers Difficulty Modal) */}
         <button
           onClick={handleStart}
           onMouseEnter={() => audioManager.playSfx('hover')}

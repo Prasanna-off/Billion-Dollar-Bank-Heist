@@ -6,7 +6,7 @@ import { useGame } from '../../state/GameContext';
 import { audioManager } from '../../audio/AudioManager';
 
 export const BankExterior: React.FC = () => {
-  const { currentScene, setScene } = useGame();
+  const { currentScene, setScene, doorUnlocked } = useGame();
   const leftDoorRef = useRef<THREE.Mesh>(null);
   const rightDoorRef = useRef<THREE.Mesh>(null);
   const cameraSearchlightRef = useRef<THREE.SpotLight>(null);
@@ -46,12 +46,17 @@ export const BankExterior: React.FC = () => {
   });
 
   const handleDoorClick = () => {
-    if (currentScene === 'BANK_EXTERIOR' || currentScene === 'MAIN_MENU') {
-      audioManager.playSfx('door');
-      setScene('BANK_ENTRY');
-      setTimeout(() => {
-        setScene('BANK_INTERIOR');
-      }, 1400);
+    if (currentScene === 'BANK_EXTERIOR') {
+      if (!doorUnlocked) {
+        window.dispatchEvent(new CustomEvent('open-door-keypad'));
+        audioManager.playSfx('click');
+      } else {
+        audioManager.playSfx('door');
+        setScene('BANK_ENTRY');
+        setTimeout(() => {
+          setScene('BANK_INTERIOR');
+        }, 1400);
+      }
     }
   };
 

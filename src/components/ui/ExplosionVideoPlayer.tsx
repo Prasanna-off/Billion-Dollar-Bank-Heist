@@ -11,81 +11,77 @@ export const ExplosionVideoPlayer: React.FC<ExplosionVideoPlayerProps> = ({ onEn
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
+
     if (!video || !canvas) return;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
+    let animId: number;
 
-    let animationFrameId: number;
+    const processChromaKey = () => {
+      if (!ctx || video.paused || video.ended || !video.videoWidth) return;
 
-    const processFrame = () => {
-      if (video.paused || video.ended) return;
-
-      if (video.videoWidth && video.videoHeight) {
-        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-        }
-
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const l = frame.data.length / 4;
-
-        for (let i = 0; i < l; i++) {
-          const r = frame.data[i * 4];
-          const g = frame.data[i * 4 + 1];
-          const b = frame.data[i * 4 + 2];
-
-          // Key out green screen background
-          if (g > 95 && g > r * 1.25 && g > b * 1.25) {
-            frame.data[i * 4 + 3] = 0; // Transparent
-          } else if (g > 80 && g > r * 1.1 && g > b * 1.1) {
-            // Soft edge feathering
-            const diff = g - Math.max(r, b);
-            frame.data[i * 4 + 3] = Math.max(0, 255 - diff * 3);
-          }
-        }
-        ctx.putImageData(frame, 0, 0);
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
       }
 
-      animationFrameId = requestAnimationFrame(processFrame);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const len = frame.data.length / 4;
+
+      for (let i = 0; i < len; i++) {
+        const r = frame.data[i * 4];
+        const g = frame.data[i * 4 + 1];
+        const b = frame.data[i * 4 + 2];
+
+        // Green Screen removal filter
+        if (g > 90 && g > r * 1.2 && g > b * 1.2) {
+          frame.data[i * 4 + 3] = 0; // Pure transparent
+        } else if (g > 70 && g > r * 1.05 && g > b * 1.05) {
+          // Soft edge blending for green spill
+          const diff = g - Math.max(r, b);
+          frame.data[i * 4 + 3] = Math.max(0, 255 - diff * 3.5);
+        }
+      }
+      ctx.putImageData(frame, 0, 0);
     };
 
-    video.play().catch((err) => {
-      console.warn('Video autoplay failed:', err);
-    });
+    const render = () => {
+      processChromaKey();
+      animId = requestAnimationFrame(render);
+    };
 
-    video.addEventListener('play', () => {
-      animationFrameId = requestAnimationFrame(processFrame);
-    });
+    video.play().catch(() => {});
+    animId = requestAnimationFrame(render);
 
     const handleEnded = () => {
       if (onEnded) onEnded();
     };
+
     video.addEventListener('ended', handleEnded);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animId);
       video.removeEventListener('ended', handleEnded);
     };
   }, [onEnded]);
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none overflow-hidden">
-      {/* Hidden Source Video */}
+    <div className="fixed inset-0 w-screen h-screen z-50 pointer-events-none overflow-hidden flex items-center justify-center">
+      {/* Hidden single green screen explosion video */}
       <video
         ref={videoRef}
-        src="/assets/video/explosion_video.mp4"
+        src="/assets/video/explosion_greenscreen.mp4"
         playsInline
         muted
         crossOrigin="anonymous"
         className="hidden"
       />
 
-      {/* Chroma-keyed Realtime Canvas Explosion Overlay */}
+      {/* Fullscreen chroma-keyed blast canvas covering entire screen */}
       <canvas
         ref={canvasRef}
-        className="w-full h-full object-cover pointer-events-none filter drop-shadow-[0_0_50px_rgba(255,100,0,0.8)]"
+        className="w-full h-full object-cover filter drop-shadow-[0_0_80px_rgba(255,100,0,1)] scale-105"
       />
     </div>
   );

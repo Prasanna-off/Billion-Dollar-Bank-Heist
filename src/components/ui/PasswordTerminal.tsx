@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Unlock, AlertTriangle, Key, Delete, CornerDownLeft, Heart, Calculator } from 'lucide-react';
+import { Lock, Unlock, AlertTriangle, Key, Delete, CornerDownLeft, Heart, ShieldAlert } from 'lucide-react';
 import { useGame } from '../../state/GameContext';
 import { FORMAT_CURRENCY } from '../../constants/challenges';
 import { audioManager } from '../../audio/AudioManager';
@@ -20,23 +20,24 @@ export const PasswordTerminal: React.FC = () => {
 
   const [inputVal, setInputVal] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clear text area automatically when exiting scene or when won/lost
+  React.useEffect(() => {
+    if (currentScene !== 'PASSWORD_TERMINAL') {
+      setInputVal('');
+      setErrorMessage(null);
+    }
+  }, [currentScene]);
 
   const isTerminalScene = currentScene === 'PASSWORD_TERMINAL';
   const isFinalChance = remainingChances === 1;
-
-  useEffect(() => {
-    if (isTerminalScene) {
-      inputRef.current?.focus();
-    }
-  }, [isTerminalScene, currentAttempt]);
 
   if (!isTerminalScene) return null;
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputVal.trim()) {
-      setErrorMessage('PLEASE ENTER A PASSWORD');
+      setErrorMessage('PLEASE ENTER THE VAULT WORD');
       audioManager.playSfx('denied');
       return;
     }
@@ -45,15 +46,17 @@ export const PasswordTerminal: React.FC = () => {
     audioManager.playSfx('click');
     const result = submitPassword(inputVal);
 
+    // Always clear the text area after submission (win or retry)
+    setInputVal('');
+
     if (!result.success) {
       setErrorMessage(result.message);
-      setInputVal('');
     }
   };
 
-  const handleKeypadPress = (char: string) => {
+  const handleKeypadPress = (letter: string) => {
     audioManager.playSfx('hover');
-    setInputVal((prev) => (prev + char).toUpperCase());
+    setInputVal((prev) => (prev + letter).toUpperCase());
   };
 
   const handleBackspace = () => {
@@ -65,6 +68,13 @@ export const PasswordTerminal: React.FC = () => {
     audioManager.playSfx('hover');
     setInputVal('');
   };
+
+  // Common on-screen alphabet keyboard for touch/kiosk
+  const keyboardRows = [
+    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+    ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+  ];
 
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
@@ -98,10 +108,10 @@ export const PasswordTerminal: React.FC = () => {
               <h2 className="text-lg sm:text-xl font-cinematic font-bold text-white tracking-wider flex items-center gap-2">
                 <span>FBI VAULT TERMINAL</span>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-sky-400 font-mono border border-sky-500/30">
-                  FBI-SEC-V4
+                  STAGE 2: WORD DECRYPTION
                 </span>
               </h2>
-              <p className="text-xs font-mono text-gray-400">FEDERAL BANK OF INDIA // SECURITY PROTOCOL</p>
+              <p className="text-xs font-mono text-gray-400">Door PIN bypassed. Enter Master Vault Word.</p>
             </div>
           </div>
 
@@ -163,7 +173,7 @@ export const PasswordTerminal: React.FC = () => {
             className="mb-4 bg-red-950/80 border border-red-500 rounded-xl p-3 text-center flex items-center justify-center space-x-2 text-red-300 font-mono text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(239,68,68,0.5)]"
           >
             <AlertTriangle className="w-5 h-5 text-red-400 animate-bounce" />
-            <span>CRITICAL WARNING: FINAL CHANCE! ONE WRONG CODE WILL TRIGGER ALARMS & EXPLOSION!</span>
+            <span>CRITICAL WARNING: FINAL CHANCE! ONE WRONG WORD TRIGGERS EXPLOSION!</span>
           </motion.div>
         )}
 
@@ -171,15 +181,11 @@ export const PasswordTerminal: React.FC = () => {
         <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-sky-500/40 rounded-2xl p-4 sm:p-5 mb-4 shadow-inner">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-mono font-bold text-sky-400 flex items-center space-x-2 uppercase tracking-widest">
-              {currentAttempt === 3 ? (
-                <Calculator className="w-4 h-4 text-yellow-400" />
-              ) : (
-                <Key className="w-4 h-4 text-sky-400" />
-              )}
-              <span>DECRYPTED CLUE #{currentAttempt}</span>
+              <Key className="w-4 h-4 text-sky-400" />
+              <span>VAULT WORD CLUE #{currentAttempt}</span>
             </span>
-            <span className="text-[10px] font-mono text-gray-400">
-              Format: [WORD][2-DIGITS]
+            <span className="text-[10px] font-mono text-emerald-400 font-bold">
+              FORMAT: LETTERS ONLY
             </span>
           </div>
 
@@ -188,16 +194,16 @@ export const PasswordTerminal: React.FC = () => {
           </p>
         </div>
 
-        {/* Input Form with generic non-revealing placeholder */}
+        {/* Word Input Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <input
-              ref={inputRef}
               type="text"
               value={inputVal}
-              onChange={(e) => setInputVal(e.target.value.toUpperCase())}
-              placeholder="ENTER PASSWORD (e.g. EAGLE88)"
+              onChange={(e) => setInputVal(e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())}
+              placeholder="ENTER SECRET VAULT WORD"
               disabled={isSubmitting}
+              autoFocus
               className={`w-full bg-black/80 border-2 rounded-2xl px-5 py-4 text-center font-mono text-xl sm:text-2xl font-bold tracking-[0.25em] text-sky-300 placeholder-gray-500 focus:outline-none transition-all ${
                 isFinalChance
                   ? 'border-red-500 focus:border-red-400 focus:shadow-[0_0_25px_rgba(239,68,68,0.5)]'
@@ -220,24 +226,25 @@ export const PasswordTerminal: React.FC = () => {
             )}
           </AnimatePresence>
 
-          {/* Virtual Cyber Keypad */}
-          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-3">
-            {/* Quick Numbers */}
-            <div className="grid grid-cols-10 gap-1.5 mb-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].map((digit) => (
-                <button
-                  type="button"
-                  key={digit}
-                  onClick={() => handleKeypadPress(digit)}
-                  className="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-sky-600 text-sky-300 font-mono font-bold text-sm border border-slate-700 transition-colors cursor-pointer"
-                >
-                  {digit}
-                </button>
-              ))}
-            </div>
+          {/* Virtual Alphabet Keyboard */}
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5 space-y-1.5">
+            {keyboardRows.map((row, rIdx) => (
+              <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5">
+                {row.map((char) => (
+                  <button
+                    key={char}
+                    type="button"
+                    onClick={() => handleKeypadPress(char)}
+                    className="w-8 sm:w-10 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-sky-600 text-sky-200 font-mono text-sm sm:text-base font-bold border border-slate-700 transition-colors cursor-pointer"
+                  >
+                    {char}
+                  </button>
+                ))}
+              </div>
+            ))}
 
-            {/* Quick Actions */}
-            <div className="flex gap-2">
+            {/* Clear & Backspace */}
+            <div className="flex justify-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={handleClear}
@@ -267,7 +274,7 @@ export const PasswordTerminal: React.FC = () => {
             }`}
           >
             {isSubmitting ? (
-              <span className="font-mono">VERIFYING BIOMETRICS...</span>
+              <span className="font-mono">VERIFYING VAULT CIPHER...</span>
             ) : (
               <>
                 <Unlock className="w-6 h-6" />
